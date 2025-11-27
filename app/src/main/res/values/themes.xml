@@ -1,0 +1,11 @@
+<resources>
+    <style name="Theme.SmsForwarder" parent="Theme.MaterialComponents.DayNight">
+        <item name="colorPrimary">@color/md_theme_primary</item>
+        <item name="colorPrimaryVariant">@color/md_theme_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+    </style>
+
+    <style name="ThemeOverlay.Actionbar" parent="ThemeOverlay.MaterialComponents.ActionBar.Surface" >
+        <item name="android:textColorPrimary">@color/md_theme_onPrimary</item>
+    </style>
+</resources>

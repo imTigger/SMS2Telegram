@@ -1,0 +1,89 @@
+# Android/Gradle
+.gradle/
+/build/
+**/build/
+
+# Android Studio / IntelliJ
+/.idea/
+*.iml
+
+# Local configuration
+local.properties
+
+# Keystore files (often private)
+*.jks
+*.keystore
+keystore.jks/
+
+# Generated/packaged files
+*.apk
+*.ap_
+*.aab
+*.aar
+
+# Gradle wrapper jar (should be tracked as script, but the jar can be ignored)
+**/gradle-wrapper.jar
+
+# Kotlin/Java
+*.class
+*.jar
+*.war
+*.ear
+*.dex
+
+# Kotlin metadata
+*.kotlin_module
+
+# NDK
+.externalNativeBuild/
+.cxx/
+
+# Build output from Android Studio
+captures/
+.output.json
+
+# Misc
+.DS_Store
+*.log
+*.tmp
+
+# Editor directories and files
+.vscode/
+
+# Generated resource folders
+**/generated/
+**/generated/*
+
+# Mac
+.AppleDouble
+.LSOverride
+
+# Gradle cache
+.gradle
+
+# Crashlytics
+crashlytics-build.properties
+
+# Proguard
+/proguard/
+
+# Annotation processors
+/apt/
+
+# Keep local test result files out
+/test-results/
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+
+# Ignore IntelliJ specific workspace files but keep project config if needed
+.idea/
+*.iml
+
+# Key files
+*.jks
+
+# End of file
+

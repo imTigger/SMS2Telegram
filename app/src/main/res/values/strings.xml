@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">SMS2Telegram</string>
+    <string name="hint_api_token">Telegram Bot API Token</string>
+    <string name="hint_chat_id">Telegram Chat ID</string>
+    <string name="label_save">Save Settings</string>
+    <string name="label_permission_status">SMS permission: %1$s</string>
+    <string name="permission_granted">Granted</string>
+    <string name="permission_denied">Denied</string>
+    <string name="description_info">Forward SMS to Telegram Chat via the Bot API.</string>
+    <string name="label_forwarding_preview">Latest forward attempt</string>
+    <string name="label_not_configured">Configure token and chat ID to begin forwarding.</string>
+    <string name="request_permission">Grant SMS Permission</string>
+    <string name="permission_required_message">SMS receive permission is required so the app can detect incoming messages.</string>
+    <string name="settings_saved">Settings saved</string>
+    <string name="permission_already_granted">Permission already granted</string>
+    <string name="label_forwarding_enabled">Forward Enabled</string>
+    <string name="test_message_button">Send Test Message</string>
+    <string name="test_message_body">SMS2Telegram Test Message.</string>
+    <string name="test_message_success">Test message sent to Telegram</string>
+    <string name="test_message_error">Failed to send test message: %1$s</string>
+    <string name="forwarding_disabled_status">Forwarding disabled. SMS will not be sent.</string>
+    <string name="off">Off</string>
+    <string name="on">On</string>
+</resources>
