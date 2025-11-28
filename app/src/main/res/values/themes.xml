@@ -1,11 +1,16 @@
 <resources>
-    <style name="Theme.SmsForwarder" parent="Theme.MaterialComponents.DayNight">
+    <style name="Theme.SmsForwarder" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorPrimaryVariant">@color/md_theme_primary</item>
         <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+        <item name="android:statusBarColor">@color/md_theme_primary</item>
+        <item name="android:navigationBarColor">@color/md_theme_primary</item>
     </style>
 
-    <style name="ThemeOverlay.Actionbar" parent="ThemeOverlay.MaterialComponents.ActionBar.Surface" >
+    <style name="ThemeOverlay.Actionbar" parent="ThemeOverlay.MaterialComponents.ActionBar">
+        <item name="colorPrimary">@color/md_theme_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
         <item name="android:textColorPrimary">@color/md_theme_onPrimary</item>
+        <item name="android:popupTheme">@style/ThemeOverlay.MaterialComponents.Light</item>
     </style>
 </resources>
