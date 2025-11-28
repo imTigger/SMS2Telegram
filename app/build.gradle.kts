@@ -9,10 +9,10 @@ android {
 
     defaultConfig {
         applicationId = "com.tigerworkshop.sms2telegram"
-        minSdk = 29
+        minSdk = 21
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.0.1"
+        versionCode = 4
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -4,7 +4,7 @@ No Ads, No Pro/Premium, No Tracking, No Unnecessary Permissions.
 
 Free & Open Source under MIT license, built for common good.
 
-Support Android 10+ with no dependencies (Not even Play Store).
+Support Android 5.0+ with no dependencies (Not even Play Store).
 
 ## Motivation
 
