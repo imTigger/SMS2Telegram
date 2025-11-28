@@ -7,7 +7,7 @@
     <string name="permission_granted">Granted</string>
     <string name="permission_denied">Denied</string>
     <string name="description_info">Forward SMS to Telegram Chat via the Bot API.</string>
-    <string name="label_forwarding_preview">Latest forward attempt</string>
+    <string name="label_latest_action">Latest Action</string>
     <string name="label_not_configured">Configure token and chat ID to begin forwarding.</string>
     <string name="request_permission">Grant SMS Permission</string>
     <string name="permission_required_message">SMS receive permission is required so the app can detect incoming messages.</string>

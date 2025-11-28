@@ -1,7 +1,10 @@
 package com.tigerworkshop.sms2telegram.ui
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
@@ -11,10 +14,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.tigerworkshop.sms2telegram.R
 import com.tigerworkshop.sms2telegram.data.SettingsRepository
 import com.tigerworkshop.sms2telegram.data.TelegramForwarder
 import com.tigerworkshop.sms2telegram.databinding.ActivityMainBinding
+import com.tigerworkshop.sms2telegram.sms.SmsReceiver
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -24,6 +29,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var settingsRepository: SettingsRepository
     private val telegramForwarder = TelegramForwarder()
     private val timeFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ")
+
+    private val statusUpdateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            updateLastStatus()
+        }
+    }
 
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -49,6 +60,19 @@ class MainActivity : AppCompatActivity() {
         populateFields()
         bindListeners()
         updatePermissionUi()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            statusUpdateReceiver,
+            IntentFilter(SmsReceiver.ACTION_STATUS_UPDATED)
+        )
+    }
+
+    override fun onStop() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusUpdateReceiver)
+        super.onStop()
     }
 
     override fun onCreateOptionsMenu(menu: android.view.Menu?): Boolean {
