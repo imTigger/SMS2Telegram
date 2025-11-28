@@ -22,6 +22,8 @@ Everyone are free to review the code, compile it themselves and use it risk-free
 
 In the next few steps, you will create your own Telegram Bot with official chatbot.
 
+Therefore your data will not be shared with any third party servers.
+
 ### Step 1: Create Telegram Bot API Key
 
 Start a chat with [@BotFather](https://t.me/botfather)
@@ -73,7 +75,7 @@ Look for the first number after "id".
 
 Now we got the ChatID: *1417799999*
 
-### Step 3 App setup
+### Step 3: App setup
 
 For example now we have both API Key and ChatID.
 
