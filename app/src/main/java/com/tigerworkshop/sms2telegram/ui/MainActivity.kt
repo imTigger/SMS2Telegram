@@ -173,6 +173,13 @@ class MainActivity : AppCompatActivity() {
             if (!view.isPressed) return@setOnCheckedChangeListener
             settingsRepository.setForwardingEnabled(isChecked)
             updateLastStatus()
+
+            val message = if (isChecked) {
+                getString(R.string.forwarding_enabled)
+            } else {
+                getString(R.string.forwarding_disabled)
+            }
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
 
         // Step 3: test message
@@ -282,7 +289,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showResetConfirmation() {
         AlertDialog.Builder(this)
-            .setTitle(R.string.label_reset)
+            .setTitle(R.string.reset_confirm_title)
             .setMessage(R.string.reset_confirm_message)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 resetToStep1()

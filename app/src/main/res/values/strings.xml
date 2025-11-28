@@ -12,7 +12,7 @@
     <string name="request_permission">Grant SMS Permission</string>
     <string name="permission_required_message">SMS receive permission is required so the app can detect incoming messages.</string>
     <string name="settings_saved">Settings saved</string>
-    <string name="permission_already_granted">Permission already granted</string>
+    <string name="permission_already_granted">Permission already granted.</string>
     <string name="label_forwarding_enabled">Enabled</string>
     <string name="test_message_button">Send Test Message</string>
     <string name="test_message_body">SMS2Telegram Test Message.</string>
@@ -26,4 +26,20 @@
     <string name="welcome_message">This app requires your own Telegram Bot API Token and Chat ID to work.\nDo you want to read the instructions?</string>
     <string name="welcome_yes">Yes</string>
     <string name="welcome_no">No</string>
+    <string name="forwarding_enabled">Forwarding enabled.</string>
+    <string name="forwarding_disabled">Forwarding disabled.</string>
+    <string name="step1_title">Step 1: Connect to Telegram</string>
+    <string name="step1_description">Enter your Bot API token and Chat ID.\nA test message will be sent to validate the configuration.</string>
+    <string name="step1_completed">Telegram API token validated</string>
+    <string name="step2_title">Step 2: Allow SMS access</string>
+    <string name="step2_description">Grant SMS permission so this app can read incoming SMS messages and forward them to Telegram.</string>
+    <string name="step2_completed">We are all set, Enjoy!</string>
+    <string name="label_validate_and_continue">Validate and Continue</string>
+    <string name="label_reset">Reset</string>
+    <string name="sms_permission_granted">✅ SMS Permission Granted</string>
+    <string name="sms_permission_not_granted">SMS Permission Not Granted</string>
+    <string name="telegram_configured">✅ Telegram Configured</string>
+    <string name="telegram_not_configured">Telegram Not Configured</string>
+    <string name="reset_confirm_title">Confirm Reset</string>
+    <string name="reset_confirm_message">This will clear your Telegram configuration and disable forwarding.\nAre you sure?</string>
 </resources>
