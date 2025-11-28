@@ -5,7 +5,7 @@
     <string name="label_save">Save Settings</string>
     <string name="label_permission_status">SMS permission: %1$s</string>
     <string name="permission_granted">Granted</string>
-    <string name="permission_denied">Denied</string>
+    <string name="permission_denied">Not Granted</string>
     <string name="description_info">Forward SMS to Telegram Chat via the Bot API.</string>
     <string name="label_latest_action">Latest Action</string>
     <string name="label_not_configured">Configure token and chat ID to begin forwarding.</string>

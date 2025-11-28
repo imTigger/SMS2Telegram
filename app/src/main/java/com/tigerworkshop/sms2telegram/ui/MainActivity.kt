@@ -32,6 +32,8 @@ class MainActivity : AppCompatActivity() {
     private val telegramForwarder = TelegramForwarder()
     private val timeFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ")
 
+    private enum class WizardStep { STEP1_CONFIG, STEP2_PERMISSION, STEP3_SUMMARY }
+
     private val statusUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             updateLastStatus()
@@ -48,6 +50,10 @@ class MainActivity : AppCompatActivity() {
                 ).show()
             }
             updatePermissionUi()
+            if (granted) {
+                // Move to step 3 automatically once permission is granted
+                showStep(WizardStep.STEP3_SUMMARY)
+            }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,9 +69,27 @@ class MainActivity : AppCompatActivity() {
             showWelcomeDialog()
         }
 
-        populateFields()
         bindListeners()
         updatePermissionUi()
+        updateLastStatus()
+        initWizardInitialStep()
+    }
+
+    private fun initWizardInitialStep() {
+        val settings = settingsRepository.loadSettings()
+        val hasSettings = settings != null
+        if (hasSettings) {
+            binding.inputToken.setText(settings!!.apiToken)
+            binding.inputChatId.setText(settings.chatId)
+        }
+
+        val hasPermission = hasSmsPermission()
+        val initialStep = when {
+            !hasSettings -> WizardStep.STEP1_CONFIG
+            !hasPermission -> WizardStep.STEP2_PERMISSION
+            else -> WizardStep.STEP3_SUMMARY
+        }
+        showStep(initialStep)
     }
 
     private fun showWelcomeDialog() {
@@ -124,34 +148,63 @@ class MainActivity : AppCompatActivity() {
         updateLastStatus()
     }
 
-    private fun populateFields() {
-        val settings = settingsRepository.loadSettings()
-        if (settings != null) {
-            binding.inputToken.setText(settings.apiToken)
-            binding.inputChatId.setText(settings.chatId)
-        }
-        binding.switchForwarding.isChecked = settingsRepository.isForwardingEnabled()
-        updateLastStatus()
-    }
-
     private fun bindListeners() {
-        binding.buttonSave.setOnClickListener {
-            saveSettings()
+        // Step 1 button: validate & continue
+        binding.buttonValidateAndContinue.setOnClickListener {
+            validateAndContinue()
         }
+
+        // Step 2: request permission
         binding.buttonRequestPermission.setOnClickListener {
             requestPermissionIfNeeded()
         }
+
+        // Step 3: forwarding switch
         binding.switchForwarding.setOnCheckedChangeListener { view, isChecked ->
             if (!view.isPressed) return@setOnCheckedChangeListener
             settingsRepository.setForwardingEnabled(isChecked)
             updateLastStatus()
         }
+
+        // Step 3: test message
         binding.buttonTestMessage.setOnClickListener {
             sendTestMessage()
         }
+
+        // Step 3: reset configuration
+        binding.buttonReset.setOnClickListener {
+            showResetConfirmation()
+        }
     }
 
-    private fun saveSettings() {
+    private fun showStep(step: WizardStep) {
+        binding.containerStep1.isVisible = step == WizardStep.STEP1_CONFIG
+        binding.containerStep2.isVisible = step == WizardStep.STEP2_PERMISSION
+        binding.containerStep3.isVisible = step == WizardStep.STEP3_SUMMARY
+
+        // Update step 3 status texts whenever we enter it
+        if (step == WizardStep.STEP3_SUMMARY) {
+            updateSummaryStatuses()
+        }
+    }
+
+    private fun updateSummaryStatuses() {
+        val smsGranted = hasSmsPermission()
+        binding.textStatusSmsPermission.text = if (smsGranted) {
+            getString(R.string.sms_permission_granted)
+        } else {
+            getString(R.string.sms_permission_not_granted)
+        }
+
+        val hasSettings = settingsRepository.loadSettings() != null
+        binding.textStatusTelegram.text = if (hasSettings) {
+            getString(R.string.telegram_configured)
+        } else {
+            getString(R.string.telegram_not_configured)
+        }
+    }
+
+    private fun validateAndContinue() {
         val token = binding.inputToken.text?.toString()?.trim().orEmpty()
         val chatId = binding.inputChatId.text?.toString()?.trim().orEmpty()
 
@@ -173,31 +226,92 @@ class MainActivity : AppCompatActivity() {
 
         if (hasError) return
 
-        settingsRepository.saveSettings(token, chatId)
-        Toast.makeText(this, getString(R.string.settings_saved), Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            binding.buttonValidateAndContinue.isEnabled = false
+            try {
+                val result = telegramForwarder.sendMessage(
+                    token = token,
+                    chatId = chatId,
+                    message = getString(R.string.test_message_body)
+                )
+
+                if (result.isSuccess) {
+                    // Save settings only when validation passes
+                    settingsRepository.saveSettings(token, chatId)
+                    val successText = timeFormatter.format(Date()) + " " + getString(R.string.test_message_success)
+                    settingsRepository.saveLastForwardStatus(successText)
+                    Toast.makeText(this@MainActivity, successText, Toast.LENGTH_SHORT).show()
+                    updateLastStatus()
+
+                    // Proceed to next step depending on permission state
+                    if (hasSmsPermission()) {
+                        showStep(WizardStep.STEP3_SUMMARY)
+                    } else {
+                        showStep(WizardStep.STEP2_PERMISSION)
+                    }
+                } else {
+                    val errorMessage = result.exceptionOrNull()?.localizedMessage ?: "unknown error"
+                    val errorText = timeFormatter.format(Date()) + " " + getString(
+                        R.string.test_message_error,
+                        errorMessage
+                    )
+                    settingsRepository.saveLastForwardStatus(errorText)
+                    Toast.makeText(this@MainActivity, errorText, Toast.LENGTH_LONG).show()
+                    updateLastStatus()
+                }
+            } finally {
+                binding.buttonValidateAndContinue.isEnabled = true
+            }
+        }
+    }
+
+    private fun showResetConfirmation() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.label_reset)
+            .setMessage(R.string.reset_confirm_message)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                resetToStep1()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun resetToStep1() {
+        // Clear stored settings and status
+        settingsRepository.saveSettings("", "")
+        settingsRepository.saveLastForwardStatus("")
+        settingsRepository.setForwardingEnabled(false)
+
+        binding.inputToken.setText("")
+        binding.inputChatId.setText("")
+        binding.switchForwarding.isChecked = false
+        updateLastStatus()
+        showStep(WizardStep.STEP1_CONFIG)
+    }
+
+    private fun hasSmsPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.RECEIVE_SMS
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun requestPermissionIfNeeded() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECEIVE_SMS
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (hasSmsPermission()) {
             Toast.makeText(
                 this,
                 getString(R.string.permission_already_granted),
                 Toast.LENGTH_SHORT
             ).show()
+            // Already granted, move on to summary
+            showStep(WizardStep.STEP3_SUMMARY)
         } else {
             permissionLauncher.launch(Manifest.permission.RECEIVE_SMS)
         }
     }
 
     private fun updatePermissionUi() {
-        val granted = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.RECEIVE_SMS
-        ) == PackageManager.PERMISSION_GRANTED
+        val granted = hasSmsPermission()
 
         val statusText = if (granted) {
             getString(R.string.permission_granted)
@@ -207,18 +321,12 @@ class MainActivity : AppCompatActivity() {
 
         binding.textPermission.text =
             getString(R.string.label_permission_status, statusText)
-        binding.buttonRequestPermission.isVisible = !granted
     }
 
     private fun updateLastStatus() {
         val forwardingEnabled = settingsRepository.isForwardingEnabled()
         if (binding.switchForwarding.isChecked != forwardingEnabled) {
             binding.switchForwarding.isChecked = forwardingEnabled
-        }
-
-        if (!forwardingEnabled) {
-            binding.textPreview.text = getString(R.string.forwarding_disabled_status)
-            return
         }
 
         val status = settingsRepository.loadLastForwardStatus()

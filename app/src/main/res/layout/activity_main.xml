@@ -28,123 +28,186 @@
             android:orientation="vertical"
             android:padding="24dp">
 
-            <TextView
-                android:id="@+id/text_description"
+            <!-- Step 1: Telegram configuration -->
+            <LinearLayout
+                android:id="@+id/container_step1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/description_info"
-                android:textSize="16sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:orientation="vertical">
 
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/switch_forwarding"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/label_forwarding_enabled"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/text_description" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/input_layout_token"
-                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="@string/hint_api_token"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/switch_forwarding">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/input_token"
+                <TextView
+                    android:id="@+id/text_step1_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:maxLines="2" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:text="@string/step1_title"
+                    android:textStyle="bold"
+                    android:textSize="18sp" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/input_layout_chat_id"
-                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="@string/hint_chat_id"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/input_layout_token">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/input_chat_id"
+                <TextView
+                    android:id="@+id/text_step1_description"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:maxLines="1" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_marginTop="8dp"
+                    android:text="@string/step1_description" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_save"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/input_layout_token"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:hint="@string/hint_api_token">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_token"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:maxLines="2" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/input_layout_chat_id"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:hint="@string/hint_chat_id">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_chat_id"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:maxLines="1" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_validate_and_continue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="@string/label_validate_and_continue" />
+            </LinearLayout>
+
+            <!-- Step 2: SMS permission -->
+            <LinearLayout
+                android:id="@+id/container_step2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/label_save"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/input_layout_chat_id" />
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginTop="24dp">
 
-            <TextView
-                android:id="@+id/text_permission"
+                <TextView
+                    android:id="@+id/text_step2_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/step2_title"
+                    android:textStyle="bold"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/text_step2_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/step2_description" />
+
+                <TextView
+                    android:id="@+id/text_permission"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text=""
+                    android:textColor="@color/md_theme_secondary"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_request_permission"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/request_permission" />
+            </LinearLayout>
+
+            <!-- Step 3: Forwarding & status -->
+            <LinearLayout
+                android:id="@+id/container_step3"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text=""
-                android:textColor="@color/md_theme_secondary"
-                android:textSize="14sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/button_save" />
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginTop="24dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_request_permission"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/request_permission"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/text_permission" />
+                <TextView
+                    android:id="@+id/text_step3_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/step3_title"
+                    android:textStyle="bold"
+                    android:textSize="18sp" />
 
-            <TextView
-                android:id="@+id/text_preview_label"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/label_latest_action"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/button_request_permission" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_forwarding"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/label_forwarding_enabled" />
 
-            <TextView
-                android:id="@+id/text_preview"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/label_not_configured"
-                android:textColor="@color/md_theme_secondary"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/text_preview_label" />
+                <TextView
+                    android:id="@+id/text_status_sms_permission"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    tools:text="SMS Permission Granted" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_test_message"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/test_message_button"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/text_preview" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/text_status_telegram"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        tools:text="Telegram Configured" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_reset"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/label_reset" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/text_preview_label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="@string/label_latest_action"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/text_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/label_not_configured"
+                    android:textColor="@color/md_theme_secondary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_test_message"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/test_message_button" />
+            </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
