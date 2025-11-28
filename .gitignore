@@ -2,6 +2,7 @@
 .gradle/
 /build/
 **/build/
+app/release/
 
 # Android Studio / IntelliJ
 /.idea/
