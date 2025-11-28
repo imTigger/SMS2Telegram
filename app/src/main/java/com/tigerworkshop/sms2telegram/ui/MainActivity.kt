@@ -7,13 +7,13 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -113,14 +113,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openHowToUsePage() {
-        val uri = Uri.parse("https://github.com/imTigger/SMS2Telegram/tree/main?tab=readme-ov-file#how-to-use")
+        val uri = "https://github.com/imTigger/SMS2Telegram/tree/main?tab=readme-ov-file#how-to-use".toUri()
         val intent = Intent(Intent.ACTION_VIEW, uri).apply {
             addCategory(Intent.CATEGORY_BROWSABLE)
         }
         try {
             startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(this, "No browser application can handle this action", Toast.LENGTH_SHORT).show()
+        } catch (_: Exception) {
+            Toast.makeText(this, "No browser installed", Toast.LENGTH_SHORT).show()
         }
     }
 
