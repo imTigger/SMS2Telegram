@@ -3,6 +3,7 @@ package com.tigerworkshop.sms2telegram.ui
 import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -10,6 +11,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -57,9 +59,36 @@ class MainActivity : AppCompatActivity() {
 
         settingsRepository = SettingsRepository(this)
 
+        if (settingsRepository.isFirstLaunch()) {
+            showWelcomeDialog()
+        }
+
         populateFields()
         bindListeners()
         updatePermissionUi()
+    }
+
+    private fun showWelcomeDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.welcome_title)
+            .setMessage(R.string.welcome_message)
+            .setPositiveButton(R.string.welcome_yes) { _: DialogInterface, _: Int ->
+                openHowToUsePage()
+            }
+            .setNegativeButton(R.string.welcome_no, null)
+            .show()
+    }
+
+    private fun openHowToUsePage() {
+        val uri = Uri.parse("https://github.com/imTigger/SMS2Telegram/tree/main?tab=readme-ov-file#how-to-use")
+        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+        }
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "No browser application can handle this action", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onStart() {
@@ -83,15 +112,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_how_to_use -> {
-                val uri = Uri.parse("https://github.com/imTigger/SMS2Telegram/tree/main?tab=readme-ov-file#how-to-use")
-                val intent = Intent(Intent.ACTION_VIEW, uri).apply {
-                    addCategory(Intent.CATEGORY_BROWSABLE)
-                }
-                try {
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    Toast.makeText(this, "No browser application can handle this action", Toast.LENGTH_SHORT).show()
-                }
+                openHowToUsePage()
                 true
             }
             else -> super.onOptionsItemSelected(item)

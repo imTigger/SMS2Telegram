@@ -23,6 +23,10 @@ class SettingsRepository(context: Context) {
         }
     }
 
+    fun isFirstLaunch(): Boolean {
+        return prefs.getString(KEY_API_TOKEN, null).isNullOrBlank()
+    }
+
     fun saveLastForwardStatus(status: String) {
         prefs.edit {
             putString(KEY_LAST_STATUS, status)
