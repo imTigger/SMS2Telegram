@@ -51,6 +51,15 @@ class MainActivity : AppCompatActivity() {
             }
             updatePermissionUi()
             if (granted) {
+                Toast.makeText(
+                    this@MainActivity,
+                    getString(R.string.step2_completed),
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                // Enable forwarding by default once permission is granted
+                settingsRepository.setForwardingEnabled(true)
+
                 // Move to step 3 automatically once permission is granted
                 showStep(WizardStep.STEP3_SUMMARY)
             }
@@ -240,7 +249,13 @@ class MainActivity : AppCompatActivity() {
                     settingsRepository.saveSettings(token, chatId)
                     val successText = timeFormatter.format(Date()) + " " + getString(R.string.test_message_success)
                     settingsRepository.saveLastForwardStatus(successText)
-                    Toast.makeText(this@MainActivity, successText, Toast.LENGTH_SHORT).show()
+
+                    Toast.makeText(
+                        this@MainActivity,
+                        getString(R.string.step1_completed),
+                        Toast.LENGTH_SHORT
+                    ).show()
+
                     updateLastStatus()
 
                     // Proceed to next step depending on permission state
@@ -256,7 +271,7 @@ class MainActivity : AppCompatActivity() {
                         errorMessage
                     )
                     settingsRepository.saveLastForwardStatus(errorText)
-                    Toast.makeText(this@MainActivity, errorText, Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@MainActivity, errorMessage, Toast.LENGTH_LONG).show()
                     updateLastStatus()
                 }
             } finally {
@@ -298,11 +313,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestPermissionIfNeeded() {
         if (hasSmsPermission()) {
-            Toast.makeText(
-                this,
-                getString(R.string.permission_already_granted),
-                Toast.LENGTH_SHORT
-            ).show()
             // Already granted, move on to summary
             showStep(WizardStep.STEP3_SUMMARY)
         } else {

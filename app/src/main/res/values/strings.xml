@@ -13,7 +13,7 @@
     <string name="permission_required_message">SMS receive permission is required so the app can detect incoming messages.</string>
     <string name="settings_saved">Settings saved</string>
     <string name="permission_already_granted">Permission already granted</string>
-    <string name="label_forwarding_enabled">Forward Enabled</string>
+    <string name="label_forwarding_enabled">Enabled</string>
     <string name="test_message_button">Send Test Message</string>
     <string name="test_message_body">SMS2Telegram Test Message.</string>
     <string name="test_message_success">Test message sent to Telegram</string>

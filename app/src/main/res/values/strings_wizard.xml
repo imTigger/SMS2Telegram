@@ -2,11 +2,11 @@
 <resources>
     <string name="step1_title">Step 1: Connect to Telegram</string>
     <string name="step1_description">Enter your Bot API token and Chat ID.\nA test message will be sent to validate the configuration.</string>
+    <string name="step1_completed">Telegram API token validated</string>
 
     <string name="step2_title">Step 2: Allow SMS access</string>
     <string name="step2_description">Grant SMS permission so this app can read incoming SMS messages and forward them to Telegram.</string>
-
-    <string name="step3_title">You are all set!</string>
+    <string name="step2_completed">We are all set, Enjoy!</string>
 
     <string name="label_validate_and_continue">Validate and Continue</string>
     <string name="label_reset">Reset</string>
