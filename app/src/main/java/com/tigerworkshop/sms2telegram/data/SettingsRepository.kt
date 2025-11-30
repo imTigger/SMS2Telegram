@@ -23,8 +23,12 @@ class SettingsRepository(context: Context) {
         }
     }
 
-    fun isFirstLaunch(): Boolean {
-        return prefs.getString(KEY_API_TOKEN, null).isNullOrBlank()
+    fun isFirstLaunch(): Boolean = prefs.getBoolean(KEY_FIRST_LAUNCH, true)
+
+    fun setFirstLaunch(isFirstLaunch: Boolean) {
+        prefs.edit {
+            putBoolean(KEY_FIRST_LAUNCH, isFirstLaunch)
+        }
     }
 
     fun saveLastForwardStatus(status: String) {
@@ -54,5 +58,6 @@ class SettingsRepository(context: Context) {
         private const val KEY_CHAT_ID = "chat_id"
         private const val KEY_LAST_STATUS = "last_forward_status"
         private const val KEY_FORWARDING_ENABLED = "forwarding_enabled"
+        private const val KEY_FIRST_LAUNCH = "first_launch"
     }
 }

@@ -23,6 +23,10 @@
     <string name="on">On</string>
     <string name="how_to_use">How to Use?</string>
     <string name="learn_how_to_obtain">Learn how to obtain them</string>
+    <string name="step0_title">Welcome to SMS2Telegram</string>
+    <string name="step0_message">Welcome to SMS2Telegram, the minimalist SMS to Telegram forwarder.\n\nAn one-time setup is required to get it up and running.</string>
+    <string name="step0_message2">If someone asked you to install this app, STOP!\nIt could be a scam.</string>
+    <string name="step0_continue">Continue</string>
     <string name="welcome_title">Welcome to SMS2Telegram</string>
     <string name="welcome_message">This app requires your own Telegram Bot API Token and Chat ID to work.\nDo you want to read the instructions?</string>
     <string name="welcome_yes">Yes</string>
@@ -37,6 +41,7 @@
     <string name="step2_completed">We are all set, Enjoy!</string>
     <string name="label_validate_and_continue">Validate and Continue</string>
     <string name="label_reset">Reset</string>
+    <string name="reset_app">Reset App</string>
     <string name="sms_permission_granted">✅ SMS Permission Granted</string>
     <string name="sms_permission_not_granted">SMS Permission Not Granted</string>
     <string name="telegram_configured">✅ Telegram Configured</string>

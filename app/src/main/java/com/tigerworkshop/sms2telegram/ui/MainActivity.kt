@@ -3,7 +3,6 @@ package com.tigerworkshop.sms2telegram.ui
 import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -32,7 +31,7 @@ class MainActivity : AppCompatActivity() {
     private val telegramForwarder = TelegramForwarder()
     private val timeFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ")
 
-    private enum class WizardStep { STEP1_CONFIG, STEP2_PERMISSION, STEP3_SUMMARY }
+    private enum class WizardStep { STEP0_WELCOME, STEP1_CONFIG, STEP2_PERMISSION, STEP3_SUMMARY }
 
     private val statusUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -74,10 +73,6 @@ class MainActivity : AppCompatActivity() {
 
         settingsRepository = SettingsRepository(this)
 
-        if (settingsRepository.isFirstLaunch()) {
-            showWelcomeDialog()
-        }
-
         bindListeners()
         updatePermissionUi()
         updateLastStatus()
@@ -94,22 +89,15 @@ class MainActivity : AppCompatActivity() {
 
         val hasPermission = hasSmsPermission()
         val initialStep = when {
+            settingsRepository.isFirstLaunch() -> WizardStep.STEP0_WELCOME
             !hasSettings -> WizardStep.STEP1_CONFIG
             !hasPermission -> WizardStep.STEP2_PERMISSION
             else -> WizardStep.STEP3_SUMMARY
         }
         showStep(initialStep)
-    }
-
-    private fun showWelcomeDialog() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.welcome_title)
-            .setMessage(R.string.welcome_message)
-            .setPositiveButton(R.string.welcome_yes) { _: DialogInterface, _: Int ->
-                openHowToUsePage()
-            }
-            .setNegativeButton(R.string.welcome_no, null)
-            .show()
+        if (initialStep != WizardStep.STEP0_WELCOME) {
+            settingsRepository.setFirstLaunch(false)
+        }
     }
 
     private fun openHowToUsePage() {
@@ -148,6 +136,10 @@ class MainActivity : AppCompatActivity() {
                 openHowToUsePage()
                 true
             }
+            R.id.action_reset_app -> {
+                showResetConfirmation()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -158,6 +150,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun bindListeners() {
+        binding.buttonStep0Continue.setOnClickListener {
+            settingsRepository.setFirstLaunch(false)
+            showStep(WizardStep.STEP1_CONFIG)
+        }
+
         // Step 1 button: validate & continue
         binding.buttonValidateAndContinue.setOnClickListener {
             validateAndContinue()
@@ -191,14 +188,10 @@ class MainActivity : AppCompatActivity() {
         binding.buttonTestMessage.setOnClickListener {
             sendTestMessage()
         }
-
-        // Step 3: reset configuration
-        binding.buttonReset.setOnClickListener {
-            showResetConfirmation()
-        }
     }
 
     private fun showStep(step: WizardStep) {
+        binding.containerStep0.isVisible = step == WizardStep.STEP0_WELCOME
         binding.containerStep1.isVisible = step == WizardStep.STEP1_CONFIG
         binding.containerStep2.isVisible = step == WizardStep.STEP2_PERMISSION
         binding.containerStep3.isVisible = step == WizardStep.STEP3_SUMMARY
@@ -297,14 +290,15 @@ class MainActivity : AppCompatActivity() {
             .setTitle(R.string.reset_confirm_title)
             .setMessage(R.string.reset_confirm_message)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                resetToStep1()
+                resetApp()
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
 
-    private fun resetToStep1() {
+    private fun resetApp() {
         // Clear stored settings and status
+        settingsRepository.setFirstLaunch(true)
         settingsRepository.saveSettings("", "")
         settingsRepository.saveLastForwardStatus("")
         settingsRepository.setForwardingEnabled(false)
@@ -313,7 +307,7 @@ class MainActivity : AppCompatActivity() {
         binding.inputChatId.setText("")
         binding.switchForwarding.isChecked = false
         updateLastStatus()
-        showStep(WizardStep.STEP1_CONFIG)
+        showStep(WizardStep.STEP0_WELCOME)
     }
 
     private fun hasSmsPermission(): Boolean {

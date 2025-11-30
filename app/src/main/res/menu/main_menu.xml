@@ -5,6 +5,10 @@
     <item
         android:id="@+id/action_how_to_use"
         android:title="@string/how_to_use"
-        android:icon="@android:drawable/ic_menu_help"
-        app:showAsAction="ifRoom|withText"/>
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_reset_app"
+        android:title="@string/reset_app"
+        app:showAsAction="never" />
 </menu>

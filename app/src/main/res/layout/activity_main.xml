@@ -13,6 +13,7 @@
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
         android:theme="@style/ThemeOverlay.Actionbar"
+        app:popupTheme="@style/ThemeOverlay.SmsForwarder.ToolbarPopup"
         app:titleTextColor="@color/md_theme_onPrimary"
         app:navigationIconTint="@color/md_theme_onPrimary"
         app:title="@string/app_name" />
@@ -29,12 +30,54 @@
             android:orientation="vertical"
             android:padding="24dp">
 
+            <LinearLayout
+                android:id="@+id/container_step0"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/text_step0_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/step0_title"
+                    android:textStyle="bold"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/text_step0_message"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/step0_message"
+                    android:textColor="@color/md_theme_secondary"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/text_step0_message2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/step0_message2"
+                    android:textColor="@android:color/holo_red_dark"
+                    android:textSize="14sp" />
+
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_step0_continue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/step0_continue" />
+            </LinearLayout>
+
             <!-- Step 1: Telegram configuration -->
             <LinearLayout
                 android:id="@+id/container_step1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:visibility="gone">
 
                 <TextView
                     android:id="@+id/text_step1_title"
@@ -107,8 +150,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:visibility="gone"
-                android:layout_marginTop="24dp">
+                android:visibility="gone">
 
                 <TextView
                     android:id="@+id/text_step2_title"
@@ -149,12 +191,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:visibility="gone"
-                android:layout_marginTop="24dp">
+                android:visibility="gone">
 
                 <ImageView
-                    android:layout_width="200dp"
-                    android:layout_height="200dp"
+                    android:layout_width="160dp"
+                    android:layout_height="160dp"
                     android:layout_gravity="center"
                     android:layout_marginTop="8dp"
                     android:layout_marginStart="20dp"
@@ -176,27 +217,12 @@
                     android:layout_marginTop="8dp"
                     tools:text="SMS Permission Granted" />
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/text_status_telegram"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:id="@+id/text_status_telegram"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        tools:text="Telegram Configured" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/button_reset"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/label_reset" />
-                </LinearLayout>
+                    android:layout_marginTop="8dp"
+                    tools:text="Telegram Configured" />
 
                 <TextView
                     android:id="@+id/text_preview_label"
