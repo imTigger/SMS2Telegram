@@ -2,7 +2,7 @@
 
 **Last updated:** November 28, 2025
 
-This Privacy Policy describes how **Minimalist Android SMS to Telegram Forwarder** (the "App") handles your information. The App is developed by **[DEVELOPER NAME]** ("we", "us", or "our").
+This Privacy Policy describes how **Minimalist Android SMS to Telegram Forwarder** (the "App") handles your information. The App is developed by **Tiger-Workshop** ("we", "us", or "our").
 
 The App is a minimalist tool that forwards SMS messages received on your Android device to your own Telegram Bot chat.
 

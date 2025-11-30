@@ -6,6 +6,8 @@ Free & Open Source under MIT license, built for common good.
 
 Support Android 5.0+ with no dependencies (Not even Play Store).
 
+![Screenshots](docs/images/cover.png)
+
 ## Motivation
 
 I use old Android phone to receive OTP from multiple numbers.
@@ -91,7 +93,9 @@ Do not forget to "Grant SMS Permission".
 
 Although you are encouraged to build it from source code for maximum security.
 
-Play Store coming soon...
+You can download the latest APK from the GitHub releases page: [Releases](releases/latest)
+
+Play Store listing (Pending for Approval): [Play Store Link](https://play.google.com/store/apps/details?id=com.tigerworkshop.sms2telegram)
 
 ## Build from source
 
