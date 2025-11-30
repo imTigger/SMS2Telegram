@@ -93,7 +93,7 @@ Do not forget to "Grant SMS Permission".
 
 Although you are encouraged to build it from source code for maximum security.
 
-You can download the latest APK from the GitHub releases page: [Releases](releases/latest)
+You can download the latest APK from the GitHub releases page: [Releases](https://github.com/imTigger/SMS2Telegram/releases/latest)
 
 Play Store listing (Pending for Approval): [Play Store Link](https://play.google.com/store/apps/details?id=com.tigerworkshop.sms2telegram)
 
