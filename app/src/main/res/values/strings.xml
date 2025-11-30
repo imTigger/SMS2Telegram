@@ -22,6 +22,7 @@
     <string name="off">Off</string>
     <string name="on">On</string>
     <string name="how_to_use">How to Use?</string>
+    <string name="learn_how_to_obtain">Learn how to obtain them</string>
     <string name="welcome_title">Welcome to SMS2Telegram</string>
     <string name="welcome_message">This app requires your own Telegram Bot API Token and Chat ID to work.\nDo you want to read the instructions?</string>
     <string name="welcome_yes">Yes</string>

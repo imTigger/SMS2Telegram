@@ -163,6 +163,11 @@ class MainActivity : AppCompatActivity() {
             validateAndContinue()
         }
 
+        // Small helper link: open How to Use page
+        binding.buttonLearnHowToObtain.setOnClickListener {
+            openHowToUsePage()
+        }
+
         // Step 2: request permission
         binding.buttonRequestPermission.setOnClickListener {
             requestPermissionIfNeeded()
