@@ -14,10 +14,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.tigerworkshop.sms2telegram.R
 import com.tigerworkshop.sms2telegram.data.SettingsRepository
+import com.tigerworkshop.sms2telegram.data.TelegramChatInfo
 import com.tigerworkshop.sms2telegram.data.TelegramForwarder
 import com.tigerworkshop.sms2telegram.databinding.ActivityMainBinding
 import com.tigerworkshop.sms2telegram.sms.SmsReceiver
@@ -77,6 +79,19 @@ class MainActivity : AppCompatActivity() {
         updatePermissionUi()
         updateLastStatus()
         initWizardInitialStep()
+
+        binding.inputToken.doAfterTextChanged {
+            val hasToken = !it.isNullOrBlank()
+            binding.buttonGetChatId.isEnabled = hasToken
+            if (hasToken) {
+                binding.inputLayoutToken.error = null
+            }
+        }
+        binding.inputChatId.doAfterTextChanged {
+            if (!it.isNullOrBlank()) {
+                binding.inputLayoutChatId.error = null
+            }
+        }
     }
 
     private fun initWizardInitialStep() {
@@ -86,6 +101,7 @@ class MainActivity : AppCompatActivity() {
             binding.inputToken.setText(settings!!.apiToken)
             binding.inputChatId.setText(settings.chatId)
         }
+        binding.buttonGetChatId.isEnabled = !binding.inputToken.text.isNullOrBlank()
 
         val hasPermission = hasSmsPermission()
         val initialStep = when {
@@ -160,6 +176,10 @@ class MainActivity : AppCompatActivity() {
             validateAndContinue()
         }
 
+        binding.buttonGetChatId.setOnClickListener {
+            fetchChatIds()
+        }
+
         // Small helper link: open How to Use page
         binding.buttonLearnHowToObtain.setOnClickListener {
             openHowToUsePage()
@@ -232,7 +252,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (chatId.isBlank()) {
-            binding.inputLayoutChatId.error = getString(R.string.hint_chat_id)
+            binding.inputLayoutChatId.error = getString(R.string.error_chat_id_required)
             hasError = true
         } else {
             binding.inputLayoutChatId.error = null
@@ -306,6 +326,8 @@ class MainActivity : AppCompatActivity() {
         binding.inputToken.setText("")
         binding.inputChatId.setText("")
         binding.switchForwarding.isChecked = false
+        binding.buttonGetChatId.isEnabled = false
+        binding.buttonGetChatId.text = getString(R.string.button_get_chat_id)
         updateLastStatus()
         showStep(WizardStep.STEP0_WELCOME)
     }
@@ -382,5 +404,65 @@ class MainActivity : AppCompatActivity() {
                 binding.buttonTestMessage.isEnabled = true
             }
         }
+    }
+
+    private fun fetchChatIds() {
+        val token = binding.inputToken.text?.toString()?.trim().orEmpty()
+        if (token.isBlank()) {
+            binding.inputLayoutToken.error = getString(R.string.hint_api_token)
+            return
+        }
+
+        lifecycleScope.launch {
+            toggleChatFetchUi(true)
+            try {
+                val result = telegramForwarder.fetchUpdates(token)
+                if (result.isSuccess) {
+                    val chats = result.getOrNull().orEmpty()
+                    if (chats.isEmpty()) {
+                        Toast.makeText(this@MainActivity, getString(R.string.chat_id_empty), Toast.LENGTH_SHORT).show()
+                    } else {
+                        showChatSelectionDialog(chats)
+                    }
+                } else {
+                    val message = result.exceptionOrNull()?.localizedMessage ?: "unknown error"
+                    Toast.makeText(this@MainActivity, getString(R.string.chat_id_fetch_error, message), Toast.LENGTH_LONG).show()
+                }
+            } finally {
+                toggleChatFetchUi(false)
+            }
+        }
+    }
+
+    private fun toggleChatFetchUi(loading: Boolean) {
+        binding.buttonGetChatId.isEnabled = !loading
+        binding.buttonGetChatId.text = if (loading) {
+            getString(R.string.button_get_chat_id_loading)
+        } else {
+            getString(R.string.button_get_chat_id)
+        }
+    }
+
+    private fun showChatSelectionDialog(chats: List<TelegramChatInfo>) {
+        val entries = chats.map { chat ->
+            val labelName = when {
+                !chat.title.isNullOrBlank() -> chat.title
+                !chat.firstName.isNullOrBlank() -> chat.firstName
+                else -> chat.id.toString()
+            }
+            val usernameSuffix = if (!chat.username.isNullOrBlank()) " (@${chat.username})" else ""
+            "$labelName$usernameSuffix: ID = ${chat.id}"
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.chat_id_selection_title)
+            .setItems(entries) { _, which ->
+                val selected = chats[which]
+                binding.inputChatId.setText(selected.id.toString())
+                binding.inputLayoutChatId.error = null
+                Toast.makeText(this, getString(R.string.chat_id_selected), Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 }

@@ -54,40 +54,17 @@ BotFather:
 
 > For a description of the Bot API, see this page: https://core.telegram.org/bots/api
 
-Now we got the API Key: *8284599999:AAGbDp-Lk1IJFaoH0fuO6skp3rc-XXX_XXX*
+Now we got the API Token: *8284599999:AAGbDp-Lk1IJFaoH0fuO6skp3rc-XXX_XXX*
 
-### Step 2: Obtain your ChatID
+### Step 2: App setup
 
-From the previous step, click on the link of your new bot: *t.me/SMS2TelegramDemoBot*, and click on the big "START" button.
+From the previous step, click on the link of your new bot: *t.me/SMS2TelegramDemoBot*, and click on the big "START" button or send any message to it.
 
-Replace {TOKENHERE} with the token obtained from last step for the following URL:
+Copy the API Token you obtained from previous step into the "Telegram Bot API Key" field.
 
-https://api.telegram.org/bot{TOKENHERE}/getUpdates
+Click on the "Find Chat ID" button, and select your Telegram username. The "Telegram Chat ID" field will be automatically filled.
 
-It should look like this:
-
-https://api.telegram.org/bot8284599999:AAGbDp-Lk1IJFaoH0fuO6skp3rc-XXX_XXX/getUpdates
-
-Open it with browser, you will see something like:
-
-> {"ok":true,"result":[{"update_id":217299999,
-"message":{"message_id":1,"from":{"id":1417799999,"is_bot":false,"first_name":"My Telegram Username","username":"mytgusername","language_code":"en"},"chat":{"id":1417799999,"first_name":"My Telegram Username","username":"mytgusername","type":"private"},"date":1764271714,"text":"/start","entities":[{"offset":0,"length":6,"type":"bot_command"}]}}]}
-
-Look for the first number after "id".
-
-Now we got the ChatID: *1417799999*
-
-### Step 3: App setup
-
-For example now we have both API Key and ChatID.
-
-API Key: *8284599999:AAGbDp-Lk1IJFaoH0fuO6skp3rc-XXX_XXX*
-
-ChatID: *1417799999*
-
-Copy both value to the app and tap "Send Test Message", you should receive a message from the bot you created.
-
-Do not forget to "Grant SMS Permission".
+Then click on "Validate and Continue" button to verify and complete the setup.
 
 ## Download
 
