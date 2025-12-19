@@ -68,11 +68,11 @@ Then click on "Validate and Continue" button to verify and complete the setup.
 
 ## Download
 
-Although you are encouraged to build it from source code for maximum security.
+Although you are encouraged to build it from source code for maximum security, Play Store and APK are available.
 
-You can download the latest APK from the GitHub releases page: [Releases](https://github.com/imTigger/SMS2Telegram/releases/latest)
+APK Download: [Releases](https://github.com/imTigger/SMS2Telegram/releases/latest)
 
-Play Store listing (Pending for Approval): [Play Store Link](https://play.google.com/store/apps/details?id=com.tigerworkshop.sms2telegram)
+Play Store: [Play Store](https://play.google.com/store/apps/details?id=com.tigerworkshop.sms2telegram)
 
 ## Build from source
 
