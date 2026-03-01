@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
@@ -67,7 +68,9 @@ class MainActivity : AppCompatActivity() {
 
                 // Check if we should show rationale (user can still be asked)
                 // If false, it means "don't ask again" was selected
-                if (!shouldShowRequestPermissionRationale(Manifest.permission.RECEIVE_SMS)) {
+                // Only available on API 23+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                    !shouldShowRequestPermissionRationale(Manifest.permission.RECEIVE_SMS)) {
                     showSmsPermissionDeniedDialog()
                 }
             }
@@ -91,7 +94,9 @@ class MainActivity : AppCompatActivity() {
 
                 // Check if we should show rationale (user can still be asked)
                 // If false, it means "don't ask again" was selected
-                if (!shouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE)) {
+                // Only available on API 23+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                    !shouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE)) {
                     showPermissionDeniedDialog()
                 }
             }
