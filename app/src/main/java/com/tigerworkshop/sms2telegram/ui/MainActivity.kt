@@ -6,7 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -43,13 +45,6 @@ class MainActivity : AppCompatActivity() {
 
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (!granted) {
-                Toast.makeText(
-                    this,
-                    getString(R.string.permission_required_message),
-                    Toast.LENGTH_LONG
-                ).show()
-            }
             updatePermissionUi()
             if (granted) {
                 Toast.makeText(
@@ -63,7 +58,44 @@ class MainActivity : AppCompatActivity() {
 
                 // Move to step 3 automatically once permission is granted
                 showStep(WizardStep.STEP3_SUMMARY)
+            } else {
+                Toast.makeText(
+                    this,
+                    getString(R.string.permission_required_message),
+                    Toast.LENGTH_LONG
+                ).show()
+
+                // Check if we should show rationale (user can still be asked)
+                // If false, it means "don't ask again" was selected
+                if (!shouldShowRequestPermissionRationale(Manifest.permission.RECEIVE_SMS)) {
+                    showSmsPermissionDeniedDialog()
+                }
             }
+        }
+
+    private val phoneStatePermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                // Permission granted, enable the feature
+                settingsRepository.setShowSimNameEnabled(true)
+                binding.switchShowSimName.isChecked = true
+                Toast.makeText(
+                    this@MainActivity,
+                    getString(R.string.phone_state_permission_granted),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                // Permission denied, keep toggle off
+                binding.switchShowSimName.isChecked = false
+                settingsRepository.setShowSimNameEnabled(false)
+
+                // Check if we should show rationale (user can still be asked)
+                // If false, it means "don't ask again" was selected
+                if (!shouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE)) {
+                    showPermissionDeniedDialog()
+                }
+            }
+            updateSummaryStatuses()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -163,6 +195,11 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updateLastStatus()
+
+        // Refresh permission status in case user granted permission in settings
+        if (binding.containerStep3.isVisible) {
+            updateSummaryStatuses()
+        }
     }
 
     private fun bindListeners() {
@@ -204,7 +241,19 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
 
-        // Step 3: test message
+        // Step 3: show SIM name switch
+        binding.switchShowSimName.setOnCheckedChangeListener { view, isChecked ->
+            if (!view.isPressed) return@setOnCheckedChangeListener
+
+            if (isChecked && !hasPhoneStatePermission()) {
+                // Need permission, request it
+                phoneStatePermissionLauncher.launch(Manifest.permission.READ_PHONE_STATE)
+            } else {
+                settingsRepository.setShowSimNameEnabled(isChecked)
+            }
+        }
+
+        // Step 4: test message
         binding.buttonTestMessage.setOnClickListener {
             sendTestMessage()
         }
@@ -229,6 +278,17 @@ class MainActivity : AppCompatActivity() {
         } else {
             getString(R.string.sms_permission_not_granted)
         }
+
+        val phoneStateGranted = hasPhoneStatePermission()
+        binding.textStatusPhoneStatePermission.text = if (phoneStateGranted) {
+            getString(R.string.phone_state_permission_granted)
+        } else {
+            getString(R.string.phone_state_permission_not_granted)
+        }
+
+        // Update show SIM name toggle state
+        val showSimNameEnabled = settingsRepository.isShowSimNameEnabled()
+        binding.switchShowSimName.isChecked = showSimNameEnabled && phoneStateGranted
 
         val hasSettings = settingsRepository.loadSettings() != null
         binding.textStatusTelegram.text = if (hasSettings) {
@@ -316,16 +376,51 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun showPermissionDeniedDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.permission_denied_title)
+            .setMessage(R.string.permission_denied_message)
+            .setPositiveButton(R.string.open_settings) { _, _ ->
+                openAppSettings()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showSmsPermissionDeniedDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.sms_permission_denied_title)
+            .setMessage(R.string.sms_permission_denied_message)
+            .setPositiveButton(R.string.open_settings) { _, _ ->
+                openAppSettings()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Unable to open settings", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun resetApp() {
         // Clear stored settings and status
         settingsRepository.setFirstLaunch(true)
         settingsRepository.saveSettings("", "")
         settingsRepository.saveLastForwardStatus("")
         settingsRepository.setForwardingEnabled(false)
+        settingsRepository.setShowSimNameEnabled(false)
 
         binding.inputToken.setText("")
         binding.inputChatId.setText("")
         binding.switchForwarding.isChecked = false
+        binding.switchShowSimName.isChecked = false
         binding.buttonGetChatId.isEnabled = false
         binding.buttonGetChatId.text = getString(R.string.button_get_chat_id)
         updateLastStatus()
@@ -336,6 +431,13 @@ class MainActivity : AppCompatActivity() {
         return ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.RECEIVE_SMS
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun hasPhoneStatePermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.READ_PHONE_STATE
         ) == PackageManager.PERMISSION_GRANTED
     }
 

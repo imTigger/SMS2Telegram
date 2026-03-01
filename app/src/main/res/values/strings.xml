@@ -51,8 +51,16 @@
     <string name="reset_app">Reset App</string>
     <string name="sms_permission_granted">✅ SMS Permission Granted</string>
     <string name="sms_permission_not_granted">SMS Permission Not Granted</string>
+    <string name="phone_state_permission_granted">✅ Phone State Permission Granted</string>
+    <string name="phone_state_permission_not_granted">Phone State Permission Not Granted</string>
     <string name="telegram_configured">✅ Telegram Configured</string>
     <string name="telegram_not_configured">Telegram Not Configured</string>
+    <string name="show_sim_name">Show SIM Name</string>
     <string name="reset_confirm_title">Confirm Reset</string>
     <string name="reset_confirm_message">This will clear your Telegram configuration and disable forwarding.\nAre you sure?</string>
+    <string name="permission_denied_title">Permission Required</string>
+    <string name="permission_denied_message">Phone State permission is required to show SIM carrier names. Please enable it in app settings.</string>
+    <string name="sms_permission_denied_title">SMS Permission Required</string>
+    <string name="sms_permission_denied_message">SMS permission is required to receive and forward messages. Please enable it in app settings.</string>
+    <string name="open_settings">Open Settings</string>
 </resources>

@@ -47,6 +47,14 @@ class SettingsRepository(context: Context) {
         }
     }
 
+    fun isShowSimNameEnabled(): Boolean = prefs.getBoolean(KEY_SHOW_SIM_NAME, false)
+
+    fun setShowSimNameEnabled(enabled: Boolean) {
+        prefs.edit {
+            putBoolean(KEY_SHOW_SIM_NAME, enabled)
+        }
+    }
+
     data class TelegramSettings(
         val apiToken: String,
         val chatId: String
@@ -59,5 +67,6 @@ class SettingsRepository(context: Context) {
         private const val KEY_LAST_STATUS = "last_forward_status"
         private const val KEY_FORWARDING_ENABLED = "forwarding_enabled"
         private const val KEY_FIRST_LAUNCH = "first_launch"
+        private const val KEY_SHOW_SIM_NAME = "show_sim_name"
     }
 }

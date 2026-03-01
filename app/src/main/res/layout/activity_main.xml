@@ -219,12 +219,26 @@
                     android:layout_marginTop="16dp"
                     android:text="@string/label_forwarding_enabled" />
 
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_show_sim_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/show_sim_name" />
+
                 <TextView
                     android:id="@+id/text_status_sms_permission"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="16dp"
                     tools:text="SMS Permission Granted" />
+
+                <TextView
+                    android:id="@+id/text_status_phone_state_permission"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    tools:text="Phone State Permission Granted" />
 
                 <TextView
                     android:id="@+id/text_status_telegram"
