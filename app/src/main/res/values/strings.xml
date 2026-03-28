@@ -55,6 +55,15 @@
     <string name="phone_state_permission_not_granted">Phone State Permission Not Granted</string>
     <string name="telegram_configured">✅ Telegram Configured</string>
     <string name="telegram_not_configured">Telegram Not Configured</string>
+    <string name="pending_queue_count">⏳ Pending delivery queue: %1$d message(s)</string>
+    <string name="button_retry_pending">Retry Pending Messages</string>
+    <string name="retry_pending_none">No pending messages to retry.</string>
+    <string name="retry_pending_enable_forwarding">Enable forwarding before retrying pending messages.</string>
+    <string name="retry_pending_scheduled">Retry scheduled for %1$d pending message(s).</string>
+    <string name="retry_pending_started">Pending delivery retry started.</string>
+    <string name="pending_messages_dialog_title">Pending Messages (%1$d)</string>
+    <string name="pending_messages_empty">No pending messages in the delivery queue.</string>
+    <string name="pending_message_entry_title">Message %1$d from %2$s queued at %3$s</string>
     <string name="show_sim_name">Show SIM Name</string>
     <string name="reset_confirm_title">Confirm Reset</string>
     <string name="reset_confirm_message">This will clear your Telegram configuration and disable forwarding.\nAre you sure?</string>

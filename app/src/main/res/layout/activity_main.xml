@@ -248,6 +248,13 @@
                     tools:text="Telegram Configured" />
 
                 <TextView
+                    android:id="@+id/text_pending_queue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    tools:text="Pending delivery queue: 0 message(s)" />
+
+                <TextView
                     android:id="@+id/text_preview_label"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -270,6 +277,13 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:text="@string/test_message_button" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_retry_pending"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/button_retry_pending" />
             </LinearLayout>
 
         </LinearLayout>

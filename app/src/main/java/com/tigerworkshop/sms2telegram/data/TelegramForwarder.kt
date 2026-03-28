@@ -35,7 +35,12 @@ class TelegramForwarder(
                 if (response.isSuccessful) {
                     Result.success(Unit)
                 } else {
-                    Result.failure(IOException("Telegram API error ${response.code}"))
+                    Result.failure(
+                        TelegramApiException(
+                            statusCode = response.code,
+                            message = response.message.ifBlank { "Telegram API error ${response.code}" }
+                        )
+                    )
                 }
             }
         } catch (ioe: IOException) {
@@ -92,6 +97,18 @@ class TelegramForwarder(
     companion object {
         private const val MAX_MESSAGE_LENGTH = 3900
 
+        fun shouldRetry(throwable: Throwable?): Boolean {
+            return when (throwable) {
+                is TelegramApiException -> {
+                    throwable.statusCode == 408 ||
+                        throwable.statusCode == 429 ||
+                        throwable.statusCode in 500..599
+                }
+                is IOException -> true
+                else -> false
+            }
+        }
+
         private val defaultClient: OkHttpClient by lazy {
             OkHttpClient.Builder()
                 .callTimeout(30, TimeUnit.SECONDS)
@@ -101,6 +118,11 @@ class TelegramForwarder(
         }
     }
 }
+
+class TelegramApiException(
+    val statusCode: Int,
+    message: String
+) : IOException(message)
 
 data class TelegramChatInfo(
     val id: Long,

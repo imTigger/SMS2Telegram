@@ -11,21 +11,16 @@ import android.telephony.SubscriptionManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.getSystemService
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.tigerworkshop.sms2telegram.data.PendingMessageOutbox
 import com.tigerworkshop.sms2telegram.data.SettingsRepository
-import com.tigerworkshop.sms2telegram.data.TelegramForwarder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.tigerworkshop.sms2telegram.data.StatusUpdateBus
+import com.tigerworkshop.sms2telegram.data.TelegramDeliveryWorker
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 
 class SmsReceiver : BroadcastReceiver() {
-    companion object {
-        const val ACTION_STATUS_UPDATED = "com.tigerworkshop.sms2telegram.ACTION_STATUS_UPDATED"
-    }
-
     private fun getSimCarrierName(context: Context, repository: SettingsRepository, slotIndex: Int): String? {
         // Check if user has enabled "Show SIM Name" feature
         if (!repository.isShowSimNameEnabled()) {
@@ -71,29 +66,24 @@ class SmsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
 
-        val pendingResult = goAsync()
         val appContext = context.applicationContext
         val repository = SettingsRepository(appContext)
-        val timeFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ")
+        val outbox = PendingMessageOutbox(appContext)
+        val timeFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US)
 
         fun notifyStatusUpdated() {
-            LocalBroadcastManager.getInstance(appContext)
-                .sendBroadcast(Intent(ACTION_STATUS_UPDATED))
+            StatusUpdateBus.notifyUpdated()
         }
 
         if (!repository.isForwardingEnabled()) {
             repository.saveLastForwardStatus("${timeFormatter.format(Date())}: Forwarding disabled, SMS ignored")
             notifyStatusUpdated()
-            pendingResult.finish()
             return
         }
 
-        val settings = repository.loadSettings()
-
-        if (settings == null) {
+        if (repository.loadSettings() == null) {
             repository.saveLastForwardStatus("${timeFormatter.format(Date())}: Incomplete settings: Missing API token or Chat ID")
             notifyStatusUpdated()
-            pendingResult.finish()
             return
         }
 
@@ -101,11 +91,10 @@ class SmsReceiver : BroadcastReceiver() {
         if (messages.isEmpty()) {
             repository.saveLastForwardStatus("No SMS payload detected.")
             notifyStatusUpdated()
-            pendingResult.finish()
             return
         }
 
-        val simSlotIndex = intent.getExtras()!!.getInt("android.telephony.extra.SLOT_INDEX", -1)
+        val simSlotIndex = intent.extras?.getInt("android.telephony.extra.SLOT_INDEX", -1) ?: -1
         val simCarrierName = getSimCarrierName(appContext, repository, simSlotIndex)
 
         val sender = messages.firstOrNull()?.displayOriginatingAddress ?: "Unknown"
@@ -122,28 +111,15 @@ class SmsReceiver : BroadcastReceiver() {
             append(body)
         }
 
-        repository.saveLastForwardStatus("${timeFormatter.format(Date())}  from $sender - Forwarding…")
+        outbox.enqueue(
+            sender = sender,
+            message = formattedMessage
+        )
+        val pendingCount = outbox.pendingCount()
+        repository.saveLastForwardStatus(
+            "${timeFormatter.format(Date())} - From $sender - Queued for delivery. $pendingCount pending message(s)."
+        )
         notifyStatusUpdated()
-
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val result = TelegramForwarder().sendMessage(
-                    token = settings.apiToken,
-                    chatId = settings.chatId,
-                    message = formattedMessage
-                )
-
-                if (result.isSuccess) {
-                    repository.saveLastForwardStatus("${timeFormatter.format(Date())} - From $sender - Success")
-                } else {
-                    repository.saveLastForwardStatus(
-                        "${timeFormatter.format(Date())} from $sender - Failed: ${result.exceptionOrNull()?.localizedMessage ?: "Unknown Error"}"
-                    )
-                }
-                notifyStatusUpdated()
-            } finally {
-                pendingResult.finish()
-            }
-        }
+        TelegramDeliveryWorker.enqueue(appContext)
     }
 }

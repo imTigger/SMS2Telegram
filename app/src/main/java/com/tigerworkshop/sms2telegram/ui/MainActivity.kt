@@ -1,10 +1,7 @@
 package com.tigerworkshop.sms2telegram.ui
 
 import android.Manifest
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -18,31 +15,30 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.lifecycle.repeatOnLifecycle
 import com.tigerworkshop.sms2telegram.R
+import com.tigerworkshop.sms2telegram.data.PendingMessageOutbox
 import com.tigerworkshop.sms2telegram.data.SettingsRepository
+import com.tigerworkshop.sms2telegram.data.StatusUpdateBus
 import com.tigerworkshop.sms2telegram.data.TelegramChatInfo
+import com.tigerworkshop.sms2telegram.data.TelegramDeliveryWorker
 import com.tigerworkshop.sms2telegram.data.TelegramForwarder
 import com.tigerworkshop.sms2telegram.databinding.ActivityMainBinding
-import com.tigerworkshop.sms2telegram.sms.SmsReceiver
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var settingsRepository: SettingsRepository
+    private lateinit var pendingMessageOutbox: PendingMessageOutbox
     private val telegramForwarder = TelegramForwarder()
-    private val timeFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ")
+    private val timeFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US)
 
     private enum class WizardStep { STEP0_WELCOME, STEP1_CONFIG, STEP2_PERMISSION, STEP3_SUMMARY }
-
-    private val statusUpdateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            updateLastStatus()
-        }
-    }
 
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -111,10 +107,12 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
 
         settingsRepository = SettingsRepository(this)
+        pendingMessageOutbox = PendingMessageOutbox(this)
 
         bindListeners()
         updatePermissionUi()
         updateLastStatus()
+        observeStatusUpdates()
         initWizardInitialStep()
 
         binding.inputToken.doAfterTextChanged {
@@ -165,19 +163,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-            statusUpdateReceiver,
-            IntentFilter(SmsReceiver.ACTION_STATUS_UPDATED)
-        )
-    }
-
-    override fun onStop() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(statusUpdateReceiver)
-        super.onStop()
-    }
-
     override fun onCreateOptionsMenu(menu: android.view.Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
@@ -204,6 +189,16 @@ class MainActivity : AppCompatActivity() {
         // Refresh permission status in case user granted permission in settings
         if (binding.containerStep3.isVisible) {
             updateSummaryStatuses()
+        }
+    }
+
+    private fun observeStatusUpdates() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                StatusUpdateBus.updates.collect {
+                    updateLastStatus()
+                }
+            }
         }
     }
 
@@ -244,6 +239,10 @@ class MainActivity : AppCompatActivity() {
                 getString(R.string.forwarding_disabled)
             }
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+
+            if (isChecked && pendingMessageOutbox.pendingCount() > 0) {
+                TelegramDeliveryWorker.enqueue(this)
+            }
         }
 
         // Step 3: show SIM name switch
@@ -262,6 +261,14 @@ class MainActivity : AppCompatActivity() {
         binding.buttonTestMessage.setOnClickListener {
             sendTestMessage()
         }
+
+        binding.buttonRetryPending.setOnClickListener {
+            retryPendingMessages()
+        }
+
+        binding.textPendingQueue.setOnClickListener {
+            showPendingMessagesDialog()
+        }
     }
 
     private fun showStep(step: WizardStep) {
@@ -273,6 +280,7 @@ class MainActivity : AppCompatActivity() {
         // Update step 3 status texts whenever we enter it
         if (step == WizardStep.STEP3_SUMMARY) {
             updateSummaryStatuses()
+            updateLastStatus()
         }
     }
 
@@ -339,6 +347,9 @@ class MainActivity : AppCompatActivity() {
                     settingsRepository.saveSettings(token, chatId)
                     val successText = timeFormatter.format(Date()) + " " + getString(R.string.test_message_success)
                     settingsRepository.saveLastForwardStatus(successText)
+                    if (pendingMessageOutbox.pendingCount() > 0 && settingsRepository.isForwardingEnabled()) {
+                        TelegramDeliveryWorker.enqueue(this@MainActivity)
+                    }
 
                     Toast.makeText(
                         this@MainActivity,
@@ -421,6 +432,8 @@ class MainActivity : AppCompatActivity() {
         settingsRepository.saveLastForwardStatus("")
         settingsRepository.setForwardingEnabled(false)
         settingsRepository.setShowSimNameEnabled(false)
+        pendingMessageOutbox.clear()
+        TelegramDeliveryWorker.cancel(this)
 
         binding.inputToken.setText("")
         binding.inputChatId.setText("")
@@ -474,8 +487,12 @@ class MainActivity : AppCompatActivity() {
             binding.switchForwarding.isChecked = forwardingEnabled
         }
 
-        val status = settingsRepository.loadLastForwardStatus()
+        val pendingCount = pendingMessageOutbox.pendingCount()
+        val status = settingsRepository.loadLastForwardStatus()?.takeIf { it.isNotBlank() }
+        binding.textPendingQueue.text = getString(R.string.pending_queue_count, pendingCount)
         binding.textPreview.text = status ?: getString(R.string.label_not_configured)
+        binding.buttonRetryPending.isEnabled =
+            pendingCount > 0 && forwardingEnabled && settingsRepository.loadSettings() != null
     }
 
     private fun sendTestMessage() {
@@ -511,6 +528,61 @@ class MainActivity : AppCompatActivity() {
                 binding.buttonTestMessage.isEnabled = true
             }
         }
+    }
+
+    private fun retryPendingMessages() {
+        val pendingCount = pendingMessageOutbox.pendingCount()
+        if (pendingCount == 0) {
+            Toast.makeText(this, getString(R.string.retry_pending_none), Toast.LENGTH_SHORT).show()
+            updateLastStatus()
+            return
+        }
+
+        if (!settingsRepository.isForwardingEnabled()) {
+            Toast.makeText(this, getString(R.string.retry_pending_enable_forwarding), Toast.LENGTH_LONG).show()
+            updateLastStatus()
+            return
+        }
+
+        if (settingsRepository.loadSettings() == null) {
+            Toast.makeText(this, getString(R.string.label_not_configured), Toast.LENGTH_SHORT).show()
+            updateLastStatus()
+            return
+        }
+
+        settingsRepository.saveLastForwardStatus(
+            timeFormatter.format(Date()) + " " + getString(R.string.retry_pending_scheduled, pendingCount)
+        )
+        TelegramDeliveryWorker.enqueue(this)
+        updateLastStatus()
+        Toast.makeText(this, getString(R.string.retry_pending_started), Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showPendingMessagesDialog() {
+        val pendingMessages = pendingMessageOutbox.listAll()
+        val dialogMessage = if (pendingMessages.isEmpty()) {
+            getString(R.string.pending_messages_empty)
+        } else {
+            pendingMessages.mapIndexed { index, pendingMessage ->
+                buildString {
+                    appendLine(
+                        getString(
+                            R.string.pending_message_entry_title,
+                            index + 1,
+                            pendingMessage.sender,
+                            timeFormatter.format(Date(pendingMessage.queuedAtMillis))
+                        )
+                    )
+                    append(pendingMessage.message)
+                }
+            }.joinToString(separator = "\n\n")
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.pending_messages_dialog_title, pendingMessages.size))
+            .setMessage(dialogMessage)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun fetchChatIds() {
