@@ -250,8 +250,8 @@ class MainActivity : AppCompatActivity() {
             if (!view.isPressed) return@setOnCheckedChangeListener
 
             if (isChecked && !hasPhoneStatePermission()) {
-                // Need permission, request it
-                phoneStatePermissionLauncher.launch(Manifest.permission.READ_PHONE_STATE)
+                binding.switchShowSimName.isChecked = false
+                showSimNamePermissionExplanationDialog()
             } else {
                 settingsRepository.setShowSimNameEnabled(isChecked)
             }
@@ -398,6 +398,17 @@ class MainActivity : AppCompatActivity() {
             .setMessage(R.string.permission_denied_message)
             .setPositiveButton(R.string.open_settings) { _, _ ->
                 openAppSettings()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showSimNamePermissionExplanationDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.sim_name_permission_explanation_title)
+            .setMessage(R.string.sim_name_permission_explanation_message)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                phoneStatePermissionLauncher.launch(Manifest.permission.READ_PHONE_STATE)
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
