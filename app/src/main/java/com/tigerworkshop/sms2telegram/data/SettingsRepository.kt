@@ -55,6 +55,29 @@ class SettingsRepository(context: Context) {
         }
     }
 
+    fun isAddCustomSimNamesEnabled(): Boolean = prefs.getBoolean(KEY_ADD_CUSTOM_SIM_NAMES, false)
+
+    fun setAddCustomSimNamesEnabled(enabled: Boolean) {
+        prefs.edit {
+            putBoolean(KEY_ADD_CUSTOM_SIM_NAMES, enabled)
+        }
+    }
+
+    fun getCustomSimName(subscriptionId: Int): String? {
+        return prefs.getString(KEY_CUSTOM_SIM_NAME_PREFIX + subscriptionId, null)?.trim()?.takeIf { it.isNotBlank() }
+    }
+
+    fun setCustomSimName(subscriptionId: Int, name: String?) {
+        val trimmed = name?.trim()
+        prefs.edit {
+            if (trimmed.isNullOrBlank()) {
+                remove(KEY_CUSTOM_SIM_NAME_PREFIX + subscriptionId)
+            } else {
+                putString(KEY_CUSTOM_SIM_NAME_PREFIX + subscriptionId, trimmed)
+            }
+        }
+    }
+
     data class TelegramSettings(
         val apiToken: String,
         val chatId: String
@@ -68,5 +91,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_FORWARDING_ENABLED = "forwarding_enabled"
         private const val KEY_FIRST_LAUNCH = "first_launch"
         private const val KEY_SHOW_SIM_NAME = "show_sim_name"
+        private const val KEY_ADD_CUSTOM_SIM_NAMES = "add_custom_sim_names"
+        private const val KEY_CUSTOM_SIM_NAME_PREFIX = "custom_sim_name_"
     }
 }

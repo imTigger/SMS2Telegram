@@ -7,6 +7,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.telephony.SubscriptionManager
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -26,6 +30,7 @@ import com.tigerworkshop.sms2telegram.data.TelegramChatInfo
 import com.tigerworkshop.sms2telegram.data.TelegramDeliveryWorker
 import com.tigerworkshop.sms2telegram.data.TelegramForwarder
 import com.tigerworkshop.sms2telegram.databinding.ActivityMainBinding
+
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -254,7 +259,19 @@ class MainActivity : AppCompatActivity() {
                 showSimNamePermissionExplanationDialog()
             } else {
                 settingsRepository.setShowSimNameEnabled(isChecked)
+                if (!isChecked) {
+                    settingsRepository.setAddCustomSimNamesEnabled(false)
+                    binding.switchAddCustomSimNames.isChecked = false
+                }
+                updateCustomSimSection()
             }
+        }
+
+        // Step 3.1: add custom SIM names switch
+        binding.switchAddCustomSimNames.setOnCheckedChangeListener { view, isChecked ->
+            if (!view.isPressed) return@setOnCheckedChangeListener
+            settingsRepository.setAddCustomSimNamesEnabled(isChecked)
+            updateCustomSimSection()
         }
 
         // Step 4: test message
@@ -308,6 +325,86 @@ class MainActivity : AppCompatActivity() {
             getString(R.string.telegram_configured)
         } else {
             getString(R.string.telegram_not_configured)
+        }
+
+        updateCustomSimSection()
+    }
+
+    private fun updateCustomSimSection() {
+        val showSimName = settingsRepository.isShowSimNameEnabled()
+        val phoneStateGranted = hasPhoneStatePermission()
+
+        binding.switchAddCustomSimNames.isVisible = showSimName && phoneStateGranted
+
+        // Clear and hide custom name fields by default
+        binding.containerCustomSimNames.removeAllViews()
+        binding.containerCustomSimNames.isVisible = false
+        binding.textCustomSimNamesDescription.isVisible = false
+
+        if (!showSimName || !phoneStateGranted) {
+            return
+        }
+
+        binding.switchAddCustomSimNames.isChecked = settingsRepository.isAddCustomSimNamesEnabled()
+
+        if (!settingsRepository.isAddCustomSimNamesEnabled()) {
+            return
+        }
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) {
+            return
+        }
+
+        try {
+            val subscriptionManager = ContextCompat.getSystemService(this, SubscriptionManager::class.java)
+            val subscriptionInfoList = subscriptionManager?.activeSubscriptionInfoList
+            if (subscriptionInfoList.isNullOrEmpty()) {
+                return
+            }
+
+            binding.containerCustomSimNames.isVisible = true
+            binding.textCustomSimNamesDescription.isVisible = true
+
+            val density = resources.displayMetrics.density
+
+            for (subscriptionInfo in subscriptionInfoList) {
+                val carrierName = subscriptionInfo.carrierName?.toString() ?: getString(R.string.unknown_carrier)
+                val slotIndex = subscriptionInfo.simSlotIndex
+                val subscriptionId = subscriptionInfo.subscriptionId
+
+                val label = TextView(this).apply {
+                    text = getString(R.string.sim_label, slotIndex + 1, carrierName)
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        topMargin = (16 * density).toInt()
+                    }
+                }
+
+                val editText = EditText(this).apply {
+                    hint = getString(R.string.custom_sim_name_hint)
+                    setText(settingsRepository.getCustomSimName(subscriptionId) ?: "")
+                    maxLines = 1
+                    filters = arrayOf(android.text.InputFilter.LengthFilter(16))
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        topMargin = (4 * density).toInt()
+                    }
+                }
+
+                editText.doAfterTextChanged { text ->
+                    val trimmed = text?.toString()?.trim()
+                    settingsRepository.setCustomSimName(subscriptionId, trimmed)
+                }
+
+                binding.containerCustomSimNames.addView(label)
+                binding.containerCustomSimNames.addView(editText)
+            }
+        } catch (e: Exception) {
+            // Silently ignore errors reading subscription info
         }
     }
 
@@ -443,6 +540,7 @@ class MainActivity : AppCompatActivity() {
         settingsRepository.saveLastForwardStatus("")
         settingsRepository.setForwardingEnabled(false)
         settingsRepository.setShowSimNameEnabled(false)
+        settingsRepository.setAddCustomSimNamesEnabled(false)
         pendingMessageOutbox.clear()
         TelegramDeliveryWorker.cancel(this)
 
@@ -450,6 +548,7 @@ class MainActivity : AppCompatActivity() {
         binding.inputChatId.setText("")
         binding.switchForwarding.isChecked = false
         binding.switchShowSimName.isChecked = false
+        binding.switchAddCustomSimNames.isChecked = false
         binding.buttonGetChatId.isEnabled = false
         binding.buttonGetChatId.text = getString(R.string.button_get_chat_id)
         updateLastStatus()

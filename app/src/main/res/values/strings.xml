@@ -74,4 +74,9 @@
     <string name="sms_permission_denied_title">SMS Permission Required</string>
     <string name="sms_permission_denied_message">SMS permission is required to receive and forward messages. Please enable it in app settings.</string>
     <string name="open_settings">Open Settings</string>
+    <string name="add_custom_sim_names">Add Custom SIM Names</string>
+    <string name="custom_sim_names_description">Set a custom name for each SIM card.</string>
+    <string name="sim_label">SIM %1$d (%2$s)</string>
+    <string name="custom_sim_name_hint">Custom name (optional)</string>
+    <string name="unknown_carrier">Unknown</string>
 </resources>

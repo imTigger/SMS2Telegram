@@ -21,7 +21,7 @@ import java.util.Locale
 
 
 class SmsReceiver : BroadcastReceiver() {
-    private fun getSimCarrierName(context: Context, repository: SettingsRepository, slotIndex: Int): String? {
+    private fun getSimCarrierName(context: Context, repository: SettingsRepository, subscriptionId: Int, slotIndex: Int): String? {
         // Check if user has enabled "Show SIM Name" feature
         if (!repository.isShowSimNameEnabled()) {
             return null
@@ -41,16 +41,38 @@ class SmsReceiver : BroadcastReceiver() {
             return null
         }
 
+        // Use custom name if available and enabled
+        if (repository.isAddCustomSimNamesEnabled() && subscriptionId != -1) {
+            val customName = repository.getCustomSimName(subscriptionId)
+            if (!customName.isNullOrBlank()) {
+                return customName
+            }
+        }
+
         try {
             val subscriptionManager = getSystemService(context, SubscriptionManager::class.java)
             if (subscriptionManager != null) {
                 val subscriptionInfoList = subscriptionManager.activeSubscriptionInfoList
                 if (subscriptionInfoList != null) {
-                    for (subscriptionInfo in subscriptionInfoList) {
-                        if (subscriptionInfo.simSlotIndex == slotIndex) {
-                            val carrierName = subscriptionInfo.carrierName?.toString()
-                            if (!carrierName.isNullOrBlank()) {
-                                return carrierName
+                    // Prefer matching by subscriptionId
+                    if (subscriptionId != -1) {
+                        for (subscriptionInfo in subscriptionInfoList) {
+                            if (subscriptionInfo.subscriptionId == subscriptionId) {
+                                val carrierName = subscriptionInfo.carrierName?.toString()
+                                if (!carrierName.isNullOrBlank()) {
+                                    return carrierName
+                                }
+                            }
+                        }
+                    }
+                    // Fallback to slot index
+                    if (slotIndex != -1) {
+                        for (subscriptionInfo in subscriptionInfoList) {
+                            if (subscriptionInfo.simSlotIndex == slotIndex) {
+                                val carrierName = subscriptionInfo.carrierName?.toString()
+                                if (!carrierName.isNullOrBlank()) {
+                                    return carrierName
+                                }
                             }
                         }
                     }
@@ -95,7 +117,8 @@ class SmsReceiver : BroadcastReceiver() {
         }
 
         val simSlotIndex = intent.extras?.getInt("android.telephony.extra.SLOT_INDEX", -1) ?: -1
-        val simCarrierName = getSimCarrierName(appContext, repository, simSlotIndex)
+        val subscriptionId = intent.extras?.getInt("android.telephony.extra.SUBSCRIPTION_INDEX", -1) ?: -1
+        val simCarrierName = getSimCarrierName(appContext, repository, subscriptionId, simSlotIndex)
 
         val sender = messages.firstOrNull()?.displayOriginatingAddress ?: "Unknown"
         val body = messages.joinToString(separator = "\n") { it.displayMessageBody ?: "" }
