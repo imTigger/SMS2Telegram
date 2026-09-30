@@ -1,0 +1,7 @@
+# Keep the build context small: only sources are needed.
+app/build/
+build/
+.gradle/
+local.properties
+*.keystore
+*.jks
