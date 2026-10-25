@@ -19,6 +19,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.tigerworkshop.sms2telegram.R
+import com.tigerworkshop.sms2telegram.data.ChatRecipients
 import com.tigerworkshop.sms2telegram.data.PendingMessageOutbox
 import com.tigerworkshop.sms2telegram.data.SettingsRepository
 import com.tigerworkshop.sms2telegram.data.StatusUpdateBus
@@ -170,6 +171,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
         return when (item.itemId) {
+            R.id.action_edit_telegram -> {
+                showStep(WizardStep.STEP1_CONFIG)
+                true
+            }
+            R.id.action_allowed_senders -> {
+                startActivity(Intent(this, SenderSettingsActivity::class.java))
+                true
+            }
             R.id.action_how_to_use -> {
                 openHowToUsePage()
                 true
@@ -257,6 +266,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        binding.buttonAllowedSenders.setOnClickListener {
+            startActivity(Intent(this, SenderSettingsActivity::class.java))
+        }
+
         // Step 4: test message
         binding.buttonTestMessage.setOnClickListener {
             sendTestMessage()
@@ -285,6 +298,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateSummaryStatuses() {
+        val allowlist = settingsRepository.loadSenderAllowlist()
+        binding.textSenderFilterStatus.text = getString(
+            when {
+                !allowlist.enabled -> R.string.sender_filter_off
+                allowlist.senders.isEmpty() -> R.string.sender_filter_empty
+                else -> R.string.sender_filter_active
+            }, allowlist.senders.size
+        )
         val smsGranted = hasSmsPermission()
         binding.textStatusSmsPermission.text = if (smsGranted) {
             getString(R.string.sms_permission_granted)
@@ -315,6 +336,7 @@ class MainActivity : AppCompatActivity() {
         val token = binding.inputToken.text?.toString()?.trim().orEmpty()
         val chatId = binding.inputChatId.text?.toString()?.trim().orEmpty()
 
+        val chatIds = runCatching { ChatRecipients.parse(chatId) }.getOrElse { emptyList() }
         var hasError = false
 
         if (token.isBlank()) {
@@ -324,8 +346,8 @@ class MainActivity : AppCompatActivity() {
             binding.inputLayoutToken.error = null
         }
 
-        if (chatId.isBlank()) {
-            binding.inputLayoutChatId.error = getString(R.string.error_chat_id_required)
+        if (chatIds.isEmpty()) {
+            binding.inputLayoutChatId.error = getString(R.string.error_chat_ids_invalid)
             hasError = true
         } else {
             binding.inputLayoutChatId.error = null
@@ -336,9 +358,9 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             binding.buttonValidateAndContinue.isEnabled = false
             try {
-                val result = telegramForwarder.sendMessage(
+                val result = telegramForwarder.sendToChats(
                     token = token,
-                    chatId = chatId,
+                    chatIds = chatIds,
                     message = getString(R.string.test_message_body)
                 )
 
@@ -443,6 +465,7 @@ class MainActivity : AppCompatActivity() {
         settingsRepository.saveLastForwardStatus("")
         settingsRepository.setForwardingEnabled(false)
         settingsRepository.setShowSimNameEnabled(false)
+        settingsRepository.saveSenderAllowlist(com.tigerworkshop.sms2telegram.data.SenderAllowlist())
         pendingMessageOutbox.clear()
         TelegramDeliveryWorker.cancel(this)
 
@@ -516,9 +539,9 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             binding.buttonTestMessage.isEnabled = false
             try {
-                val result = telegramForwarder.sendMessage(
+                val result = telegramForwarder.sendToChats(
                     token = settings.apiToken,
-                    chatId = settings.chatId,
+                    chatIds = settings.chatIds,
                     message = getString(R.string.test_message_body)
                 )
 
@@ -633,7 +656,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showChatSelectionDialog(chats: List<TelegramChatInfo>) {
+    internal fun showChatSelectionDialog(chats: List<TelegramChatInfo>) {
+        val existing = runCatching {
+            ChatRecipients.parse(binding.inputChatId.text?.toString().orEmpty())
+        }.getOrElse {
+            binding.inputLayoutChatId.error = getString(R.string.error_chat_ids_invalid)
+            return
+        }
+        val available = chats.map { it.id.toString() }
+        val checked = BooleanArray(chats.size) { available[it] in existing }
+        // Keep manually entered destinations which Telegram did not return in recent updates.
+        val unlisted = existing.filterNot { it in available }
+        binding.inputChatId.clearFocus()
+        (getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager)
+            ?.hideSoftInputFromWindow(binding.inputChatId.windowToken, 0)
         val entries = chats.map { chat ->
             val labelName = when {
                 !chat.title.isNullOrBlank() -> chat.title
@@ -646,11 +682,13 @@ class MainActivity : AppCompatActivity() {
 
         AlertDialog.Builder(this)
             .setTitle(R.string.chat_id_selection_title)
-            .setItems(entries) { _, which ->
-                val selected = chats[which]
-                binding.inputChatId.setText(selected.id.toString())
+            .setMultiChoiceItems(entries, checked) { _, which, isChecked ->
+                checked[which] = isChecked
+            }
+            .setPositiveButton(R.string.chat_ids_apply) { _, _ ->
+                val selected = available.filterIndexed { index, _ -> checked[index] }
+                binding.inputChatId.setText((unlisted + selected).distinct().joinToString("\n"))
                 binding.inputLayoutChatId.error = null
-                Toast.makeText(this, getString(R.string.chat_id_selected), Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()

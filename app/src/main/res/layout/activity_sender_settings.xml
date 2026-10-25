@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:fitsSystemWindows="true">
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar" android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize" android:background="?attr/colorPrimary"
+        android:theme="@style/ThemeOverlay.Actionbar"
+        app:title="@string/allowed_senders" app:titleTextColor="@color/md_theme_onPrimary"
+        app:navigationIcon="?attr/homeAsUpIndicator" app:navigationIconTint="@color/md_theme_onPrimary" />
+    <androidx.core.widget.NestedScrollView android:layout_width="match_parent"
+        android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="24dp">
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_sender_filter" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:minHeight="48dp"
+                android:text="@string/sender_filter_toggle" />
+            <TextView android:id="@+id/text_filter_status" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                android:textStyle="bold" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="16dp" android:text="@string/sender_filter_help" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/input_layout_sender" android:layout_width="match_parent"
+                android:visibility="gone"
+                android:layout_height="wrap_content" android:layout_marginTop="24dp"
+                android:hint="@string/sender_input_hint">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/input_sender" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:inputType="textNoSuggestions"
+                    android:maxLines="1" android:singleLine="true" />
+            </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_add_sender" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/sender_add" />
+            <LinearLayout android:id="@+id/sender_list" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="24dp"
+                android:orientation="vertical" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="24dp" android:text="@string/sender_filter_saved"
+                android:textColor="@color/md_theme_secondary" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

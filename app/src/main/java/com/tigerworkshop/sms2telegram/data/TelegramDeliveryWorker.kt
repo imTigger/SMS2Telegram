@@ -21,66 +21,58 @@ class TelegramDeliveryWorker(
 
     private val settingsRepository = SettingsRepository(appContext)
     private val outbox = PendingMessageOutbox(appContext)
-    private val telegramForwarder = TelegramForwarder()
+    internal var telegramForwarder = TelegramForwarder()
     private val timeFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US)
 
     override suspend fun doWork(): Result {
-        val pendingCount = outbox.pendingCount()
-        if (pendingCount == 0) {
-            notifyStatusUpdated()
+        if (!settingsRepository.isForwardingEnabled() || settingsRepository.loadSettings() == null) {
+            saveStatus("${timestamp()} - Forwarding paused or Telegram not configured. ${outbox.pendingCount()} pending message(s).")
             return Result.success()
         }
-
-        if (!settingsRepository.isForwardingEnabled()) {
-            saveStatus(
-                "${timestamp()} - Forwarding disabled. $pendingCount pending message(s) waiting."
-            )
-            return Result.success()
-        }
-
-        val settings = settingsRepository.loadSettings()
-        if (settings == null) {
-            saveStatus(
-                "${timestamp()} - Telegram not configured. $pendingCount pending message(s) waiting."
-            )
-            return Result.success()
-        }
-
+        var retryNeeded = false
+        var delivered = 0
+        val failedChats = mutableSetOf<String>()
+        val processed = mutableSetOf<String>()
         while (true) {
-            val pendingMessage = outbox.peekOldest() ?: break
-            val sendResult = telegramForwarder.sendMessage(
-                token = settings.apiToken,
-                chatId = settings.chatId,
-                message = pendingMessage.message
-            )
-
-            if (sendResult.isSuccess) {
-                outbox.remove(pendingMessage.id)
-                val remaining = outbox.pendingCount()
-                saveStatus(
-                    "${timestamp()} - From ${pendingMessage.sender} - Delivered. $remaining pending message(s)."
-                )
+            val pending = outbox.listAll().firstOrNull { it.id !in processed } ?: break
+            processed.add(pending.id)
+            if (!settingsRepository.loadSenderAllowlist().allows(pending.sender)) {
+                outbox.remove(pending.id)
                 continue
             }
-
-            val exception = sendResult.exceptionOrNull()
-            val remaining = outbox.pendingCount()
-            val errorMessage = exception?.localizedMessage ?: "Unknown Error"
-
-            if (TelegramForwarder.shouldRetry(exception)) {
-                saveStatus(
-                    "${timestamp()} - From ${pendingMessage.sender} - Delivery deferred: $errorMessage. $remaining pending message(s)."
-                )
-                return Result.retry()
+            val settings = settingsRepository.loadSettings() ?: return Result.success()
+            // New SMS snapshot their recipients when received. Old queue entries bind here.
+            // Removing a recipient cancels their pending deliveries; adding one does not
+            // retroactively share messages that already have a recipient snapshot.
+            val remaining = (pending.pendingChatIds ?: settings.chatIds)
+                .filter { it in settings.chatIds }.distinct().toMutableList()
+            outbox.setPendingChatIds(pending.id, remaining)
+            for (chatId in remaining.toList()) {
+                if (!settingsRepository.isForwardingEnabled()) return Result.success()
+                if (!settingsRepository.loadSenderAllowlist().allows(pending.sender)) {
+                    outbox.remove(pending.id)
+                    break
+                }
+                val current = settingsRepository.loadSettings() ?: return Result.success()
+                if (chatId !in current.chatIds) {
+                    remaining.remove(chatId)
+                    outbox.setPendingChatIds(pending.id, remaining)
+                    continue
+                }
+                val result = telegramForwarder.sendMessage(current.apiToken, chatId, pending.message)
+                if (result.isSuccess) {
+                    delivered++
+                    remaining.remove(chatId)
+                    outbox.setPendingChatIds(pending.id, remaining)
+                } else {
+                    failedChats.add(chatId)
+                    retryNeeded = retryNeeded || TelegramForwarder.shouldRetry(result.exceptionOrNull())
+                }
             }
-
-            saveStatus(
-                "${timestamp()} - From ${pendingMessage.sender} - Delivery paused: $errorMessage. $remaining pending message(s)."
-            )
-            return Result.success()
         }
-
-        return Result.success()
+        val failures = if (failedChats.isEmpty()) "" else " Failed chat(s): ${failedChats.joinToString()}."
+        saveStatus("${timestamp()} - $delivered delivery(s) completed. ${outbox.pendingCount()} pending message(s).$failures")
+        return if (retryNeeded) Result.retry() else Result.success()
     }
 
     private fun saveStatus(status: String) {
@@ -113,7 +105,7 @@ class TelegramDeliveryWorker(
 
             WorkManager.getInstance(context).enqueueUniqueWork(
                 UNIQUE_WORK_NAME,
-                ExistingWorkPolicy.KEEP,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
                 request
             )
         }

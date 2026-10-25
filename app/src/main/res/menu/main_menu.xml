@@ -2,6 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <item android:id="@+id/action_edit_telegram"
+        android:title="@string/edit_telegram" app:showAsAction="never" />
+
+    <item android:id="@+id/action_allowed_senders"
+        android:title="@string/allowed_senders" app:showAsAction="never" />
+
     <item
         android:id="@+id/action_how_to_use"
         android:title="@string/how_to_use"

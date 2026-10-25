@@ -81,7 +81,8 @@ class SmsReceiver : BroadcastReceiver() {
             return
         }
 
-        if (repository.loadSettings() == null) {
+        val settings = repository.loadSettings()
+        if (settings == null) {
             repository.saveLastForwardStatus("${timeFormatter.format(Date())}: Incomplete settings: Missing API token or Chat ID")
             notifyStatusUpdated()
             return
@@ -97,7 +98,13 @@ class SmsReceiver : BroadcastReceiver() {
         val simSlotIndex = intent.extras?.getInt("android.telephony.extra.SLOT_INDEX", -1) ?: -1
         val simCarrierName = getSimCarrierName(appContext, repository, simSlotIndex)
 
-        val sender = messages.firstOrNull()?.displayOriginatingAddress ?: "Unknown"
+        val originatingAddress = messages.firstOrNull()?.displayOriginatingAddress
+        if (!repository.loadSenderAllowlist().allows(originatingAddress)) {
+            repository.saveLastForwardStatus("${timeFormatter.format(Date())}: SMS ignored by sender filter")
+            notifyStatusUpdated()
+            return
+        }
+        val sender = originatingAddress ?: "Unknown"
         val body = messages.joinToString(separator = "\n") { it.displayMessageBody ?: "" }
         val formattedMessage = buildString {
             appendLine("From: $sender")
@@ -113,7 +120,8 @@ class SmsReceiver : BroadcastReceiver() {
 
         outbox.enqueue(
             sender = sender,
-            message = formattedMessage
+            message = formattedMessage,
+            chatIds = settings.chatIds
         )
         val pendingCount = outbox.pendingCount()
         repository.saveLastForwardStatus(

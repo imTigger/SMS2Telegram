@@ -4,12 +4,21 @@ import android.content.Context
 import androidx.core.content.edit
 
 class SettingsRepository(context: Context) {
+    private val appContext = context.applicationContext
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun saveSettings(token: String, chatId: String) {
+        val normalizedIds = ChatRecipients.parse(chatId).joinToString("\n")
+        // Preserve old queued SMS destinations before a recipient-list change.
+        loadSettings()?.let { previous ->
+            val outbox = PendingMessageOutbox(appContext)
+            outbox.listAll().filter { it.pendingChatIds == null }.forEach {
+                outbox.setPendingChatIds(it.id, previous.chatIds)
+            }
+        }
         prefs.edit {
             putString(KEY_API_TOKEN, token.trim())
-            putString(KEY_CHAT_ID, chatId.trim())
+            putString(KEY_CHAT_ID, normalizedIds)
         }
     }
 
@@ -17,9 +26,21 @@ class SettingsRepository(context: Context) {
         val token = prefs.getString(KEY_API_TOKEN, null)?.takeIf { it.isNotBlank() }
         val chatId = prefs.getString(KEY_CHAT_ID, null)?.takeIf { it.isNotBlank() }
         return if (token != null && chatId != null) {
-            TelegramSettings(token, chatId)
+            runCatching { TelegramSettings(token, chatId).takeIf { it.chatIds.isNotEmpty() } }.getOrNull()
         } else {
             null
+        }
+    }
+
+    fun loadSenderAllowlist(): SenderAllowlist = SenderAllowlist(
+        enabled = prefs.getBoolean(KEY_SENDER_FILTER_ENABLED, false),
+        senders = prefs.getStringSet(KEY_ALLOWED_SENDERS, emptySet()).orEmpty().toSet()
+    )
+
+    fun saveSenderAllowlist(allowlist: SenderAllowlist) {
+        prefs.edit {
+            putBoolean(KEY_SENDER_FILTER_ENABLED, allowlist.enabled)
+            putStringSet(KEY_ALLOWED_SENDERS, SenderAllowlist.clean(allowlist.senders))
         }
     }
 
@@ -58,7 +79,9 @@ class SettingsRepository(context: Context) {
     data class TelegramSettings(
         val apiToken: String,
         val chatId: String
-    )
+    ) {
+        val chatIds: List<String> = ChatRecipients.parse(chatId)
+    }
 
     companion object {
         private const val PREFS_NAME = "sms_forwarder_prefs"
@@ -67,6 +90,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_LAST_STATUS = "last_forward_status"
         private const val KEY_FORWARDING_ENABLED = "forwarding_enabled"
         private const val KEY_FIRST_LAUNCH = "first_launch"
+        private const val KEY_SENDER_FILTER_ENABLED = "sender_filter_enabled"
+        private const val KEY_ALLOWED_SENDERS = "allowed_senders"
         private const val KEY_SHOW_SIM_NAME = "show_sim_name"
     }
 }

@@ -48,6 +48,17 @@ class TelegramForwarder(
         }
     }
 
+    /** Send a manual test to every destination and report partial failures. */
+    suspend fun sendToChats(token: String, chatIds: List<String>, message: String): Result<Unit> {
+        val failed = mutableListOf<String>()
+        for (chatId in chatIds.distinct()) {
+            if (sendMessage(token, chatId, message).isFailure) failed.add(chatId)
+        }
+        return if (failed.isEmpty()) Result.success(Unit) else Result.failure(
+            IOException("Could not send to chat(s): ${failed.joinToString()}. Check the IDs and make sure each recipient has started the bot.")
+        )
+    }
+
     suspend fun fetchUpdates(token: String): Result<List<TelegramChatInfo>> = withContext(Dispatchers.IO) {
         val url = "https://api.telegram.org/bot${token}/getUpdates"
         val request = Request.Builder()
